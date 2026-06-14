@@ -1,7 +1,6 @@
-from datetime import timedelta
-from typing import Any
+from typing import List
 
-from sqlalchemy import asc, func, select
+from sqlalchemy import asc, func, Row, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.base import CRUDBase
@@ -24,15 +23,13 @@ class CRUDDonation(CRUDBase):
     async def get_projects_by_completion_rate(
             self,
             session: AsyncSession
-    ) -> list[dict[str, Any]]:
+    ) -> List[Row]:
         closed_projects = await session.execute(
             select(
                 CharityProject.name,
                 CharityProject.description,
                 (func.julianday(CharityProject.close_date) -
-                 func.julianday(CharityProject.create_date)).label('duration'),
-                CharityProject.create_date,
-                CharityProject.close_date
+                 func.julianday(CharityProject.create_date)).label('duration')
             ).where(
                 CharityProject.fully_invested,
                 CharityProject.close_date.isnot(None)
@@ -41,16 +38,7 @@ class CRUDDonation(CRUDBase):
             )
         )
         closed_projects = closed_projects.all()
-        res = []
-        for project in closed_projects:
-            duration_seconds = int(project.duration * 86400)
-            duration_timedelta = timedelta(seconds=duration_seconds)
-            res.append({
-                "name": project.name,
-                "description": project.description,
-                "duration": duration_timedelta
-            })
-        return res
+        return closed_projects
 
 
 donation_crud = CRUDDonation(Donation)

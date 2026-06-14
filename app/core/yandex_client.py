@@ -3,6 +3,8 @@ from typing import Optional
 import httpx
 from fastapi import HTTPException, status
 
+from app.core.config import settings
+
 
 class YandexDiskClient:
     """Универсальный клиент для API Яндекс Диска"""
@@ -105,8 +107,6 @@ class YandexDiskClient:
 
 async def get_yandex_client():
     """Dependency для получения клиента Яндекс Диска"""
-    from app.core.config import settings
-
     if settings.yandex_disk_token is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

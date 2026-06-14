@@ -1,6 +1,8 @@
 import io
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List
+
+from sqlalchemy import Row
 import xlsxwriter
 
 from app.core.config import settings
@@ -31,7 +33,7 @@ async def create_simple_report(
 
 async def update_simple_report(
         upload_url: str,
-        closed_projects: List[Dict[str, Any]],
+        closed_projects: List[Row],
         yandex_client: YandexDiskClient
 ) -> None:
     """Записывает данные в Excel-файл и загружает на Яндекс Диск"""
@@ -59,10 +61,11 @@ async def update_simple_report(
         worksheet.write(1, col, header, header_format)
     # Данные
     for row, res in enumerate(closed_projects, start=2):
-        format_duration = format_time_delta(res['duration'])
-        worksheet.write(row, 0, str(res['name']), cell_format)
+        format_duration = format_time_delta(timedelta(seconds=int(
+            res.duration * 86400)))
+        worksheet.write(row, 0, str(res.name), cell_format)
         worksheet.write(row, 1, str(format_duration), cell_format)
-        worksheet.write(row, 2, str(res['description']), cell_format)
+        worksheet.write(row, 2, str(res.description), cell_format)
     count_row = len(closed_projects)
     worksheet.merge_range(f'A{count_row + 3}:C{count_row + 3}',
                           f'Всего проектов: {str(count_row)}',
